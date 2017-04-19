@@ -3,7 +3,12 @@
 #include <mpi.h>
 
 
+// prototype of external function
+int code( MPI_Comm * );
 
+//
+// Driver
+//
 int main( int argc, char *argv[] )
 {
    int irequired,iprovided;
@@ -25,6 +30,7 @@ int main( int argc, char *argv[] )
 
    if( irank == 0 ) printf("Test running on %d proccesses on \"%s\" \n", nproc,hname);
 
+   (void) code( &comm );
 
 
    MPI_Finalize();

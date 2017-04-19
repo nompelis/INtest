@@ -18,8 +18,9 @@ COPTS += -DNO_DEBUG2_
 
 ############################### Target ##############################
 all: libs
+	$(MPICC) -c $(COPTS) code.c
 	$(MPICC) $(COPTS) \
-       main.c -Wl,-rpath=.,$(RPATH)  -L . -lINtest -lm
+       main.c -Wl,-rpath=.,$(RPATH) code.o  -L . -lINtest -lm
 
 
 libs:
