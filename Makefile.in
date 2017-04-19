@@ -1,0 +1,11 @@
+
+ifeq ($(MODE),zero)
+############################### desktop GCC
+CC = gcc -D_GNU_SOURCE
+MPICC = mpicc  -D_GNU_SOURCE
+MPICXX = mpicxx  -D_GNU_SOURCE
+
+COPTS = -g -fPIC -O0 -Wall -Wstrict-aliasing  -fno-strict-aliasing
+###############################
+endif
+
