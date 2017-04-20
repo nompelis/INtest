@@ -195,6 +195,18 @@ int code( MPI_Comm *comp )
    }
 
    // copy element connectivity (surface 1)
+   for(i=0;i<nf1;++i) {
+      n = i*5;
+
+      ifaces[n + 0] = icon[n + 0];
+#ifdef _DEBUG2_
+  printf("Should be 4: %d \n", icon[n + 0] );
+#endif
+      ifaces[n + 1] = i;
+      ifaces[n + 2] = -1;
+      ifaces[n + 3] = -1;
+      ifaces[n + 4] = -1;
+   }
 
    // copy vertex coefficients (surface 1)
    for(i=0;i<nf1;++i) {
@@ -204,6 +216,20 @@ int code( MPI_Comm *comp )
          rpoints[ (i*4 + j)*3 + 1 ] = x1[ icon[n+1+j]*3 + 1 ];
          rpoints[ (i*4 + j)*3 + 2 ] = x1[ icon[n+1+j]*3 + 2 ];
       }
+   }
+
+   // copy element connectivity (surface 2)
+   for(i=0;i<nf2;++i) {
+      n = i*5;
+
+      jfaces[n + 0] = jcon[n + 0];
+#ifdef _DEBUG2_
+  printf("Should be 3: %d \n", jcon[n + 0] );
+#endif
+      jfaces[n + 1] = i;
+      jfaces[n + 2] = -1;
+      jfaces[n + 3] = -1;
+      jfaces[n + 4] = -1;
    }
 
    // copy vertex coefficients (surface 2)
@@ -221,7 +247,8 @@ int code( MPI_Comm *comp )
    // (In the following call, returned pointers are missing; they will be added
    // when building the functionality is completed.)
    //
-   ierr = incg_PerformFacematch( &comm, nf1, rpoints, nf2, qpoints );
+   ierr = incg_PerformFacematch( &comm, nf1, ifaces, rpoints,
+                                        nf2, jfaces, qpoints );
 
 
    //

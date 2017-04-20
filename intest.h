@@ -14,8 +14,8 @@ extern "C" {
 //
 // API function prototype visible to the C side to invoke the functionality
 //
-int incg_PerformFacematch( MPI_Comm *comm, int icnt1, double *x1,
-                                           int icnt2, double *x2 );
+int incg_PerformFacematch( MPI_Comm *comm, int icnt1, int *ilist, double *x1,
+                                           int icnt2, int *jlist, double *x2 );
 
 #ifdef __cplusplus
 }
@@ -30,12 +30,19 @@ class incg_FaceMatcher {
    incg_FaceMatcher( MPI_Comm *comp );
    ~incg_FaceMatcher();
 
+   void setData( int icnt_, int *icon_, double *xi_,
+                 int jcnt_, int *jcon_, double *xj_ );
+
  protected:
 
  private:
    MPI_Comm comm;
    int irank;
    int nproc;
+
+   int nel1,nel2;
+   int *icon,*jcon;
+   double *xi,*xj;
 
 };
 
