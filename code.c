@@ -211,10 +211,11 @@ int code( MPI_Comm *comp )
    // copy vertex coefficients (surface 1)
    for(i=0;i<nf1;++i) {
       n = i*5;
+/////// we need to make a correction here; do not assume 4th index is good
       for(j=0;j<4;++j) {
-         rpoints[ (i*4 + j)*3 + 0 ] = x1[ icon[n+1+j]*3 + 0 ];
-         rpoints[ (i*4 + j)*3 + 1 ] = x1[ icon[n+1+j]*3 + 1 ];
-         rpoints[ (i*4 + j)*3 + 2 ] = x1[ icon[n+1+j]*3 + 2 ];
+         rpoints[ (i*4 + j)*3 + 0 ] = x1[ (icon[n+1+j]-1)*3 + 0 ];
+         rpoints[ (i*4 + j)*3 + 1 ] = x1[ (icon[n+1+j]-1)*3 + 1 ];
+         rpoints[ (i*4 + j)*3 + 2 ] = x1[ (icon[n+1+j]-1)*3 + 2 ];
       }
    }
 
@@ -235,18 +236,41 @@ int code( MPI_Comm *comp )
    // copy vertex coefficients (surface 2)
    for(i=0;i<nf2;++i) {
       n = i*5;
+/////// we need to make a correction here; do not assume 4th index is good
       for(j=0;j<4;++j) {
-         qpoints[ (i*4 + j)*3 + 0 ] = x2[ jcon[n+1+j]*3 + 0 ];
-         qpoints[ (i*4 + j)*3 + 1 ] = x2[ jcon[n+1+j]*3 + 1 ];
-         qpoints[ (i*4 + j)*3 + 2 ] = x2[ jcon[n+1+j]*3 + 2 ];
+         qpoints[ (i*4 + j)*3 + 0 ] = x2[ (jcon[n+1+j]-1)*3 + 0 ];
+         qpoints[ (i*4 + j)*3 + 1 ] = x2[ (jcon[n+1+j]-1)*3 + 1 ];
+         qpoints[ (i*4 + j)*3 + 2 ] = x2[ (jcon[n+1+j]-1)*3 + 2 ];
       }
    }
+
+#ifdef _DEBUG_
+if(irank==0){
+char filename[20];
+sprintf( filename, "TEST.dat");
+FILE *fp = fopen( filename, "w" );
+fprintf(fp,"variables = x y z\n");
+fprintf(fp,"zone T=\"test\", N=%d, E=%d, F=FEPOINT, ET=QUADRILATERAL\n",
+    4*nf2, nf2 );
+for(i=0;i<nf2*4;++i) {
+for(j=0;j<3;++j) {
+fprintf(fp, " %lf ",qpoints[i*3+j] );
+} fprintf(fp, "\n"); }
+for(i=0;i<nf2;++i) {
+for(j=0;j<4;++j) {
+fprintf(fp, " %d ",i*4+j+1 );
+} fprintf(fp, "\n"); }
+fclose(fp);
+}
+#endif
+
 
    //
    // Use the library to resolve dependencies
    // (In the following call, returned pointers are missing; they will be added
    // when building the functionality is completed.)
    //
+//while(1) /// LOOP to check for memory leaks
    ierr = incg_PerformFacematch( &comm, nf1, ifaces, rpoints,
                                         nf2, jfaces, qpoints );
 
