@@ -2,8 +2,13 @@
 #include <stdlib.h>
 #include <mpi.h>
 
+#include "intest.h"
 
 
+//
+// Function to create two sets of faces, one of quadrilaterals and one of
+// triangles, given i- and j-direction sizes for a quadrilateral subdivision.
+//
 int make_faces( int im, int jm,
                 int **icon, double **x1, 
                 int **jcon, double **x2 )
@@ -81,6 +86,10 @@ int code( MPI_Comm *comp )
    int *icon,*jcon,im,jm, nf1,nf2;
    double *x1,*x2;
    int i,j,n;
+   int *ifaces,*jfaces;
+   double *rpoints,*qpoints;
+   size_t isize;
+   int ierr=0;
 
 
    //
@@ -97,8 +106,14 @@ int code( MPI_Comm *comp )
    im = 2;
    jm = 3;
    nf1 = make_faces( im, jm, &icon, &x1, &jcon, &x2 );
+   MPI_Allreduce( MPI_IN_PLACE, &nf1, 1, MPI_INT, MPI_SUM, comm );
    if( nf1 != 0 ) {
       printf("Could not make face groups (%d) \n", irank);
+      if( icon != NULL ) free( icon );
+      if( x1   != NULL ) free( x1 );
+      if( jcon != NULL ) free( jcon );
+      if( x2   != NULL ) free( x2 );
+      return(1);
    }
    nf1 = im*jm;
    nf2 = nf1*2;
@@ -116,7 +131,7 @@ int code( MPI_Comm *comp )
    //
    // Dump the structures
    //
-   if( irank == 0 ) {
+   if( irank == 0 ) {    // select an MPI process manually (hardwired) here
       FILE *fp = fopen("FACES.dat","w");
 
       fprintf(fp,"variables = x y z \n");
@@ -145,17 +160,85 @@ int code( MPI_Comm *comp )
          ++n;
       }}
 
-
       fclose(fp);
    }
    MPI_Barrier( comm );
 
 
+   //
+   // Prepare arrays to pass to the face-matching library
+   //
+   isize = (size_t) (nf1*(5+3));
+   ifaces = (int *) malloc(isize*sizeof(int));
+   isize = (size_t) (nf1*4*3);
+   rpoints = (double *) malloc(isize*sizeof(double));
+
+   isize = (size_t) (nf2*(5+3));
+   jfaces = (int *) malloc(isize*sizeof(int));
+   isize = (size_t) (nf2*4*3);
+   qpoints = (double *) malloc(isize*sizeof(double));
+
+   if( ifaces == NULL || jfaces == NULL ||
+       rpoints == NULL || qpoints == NULL ) ierr = 1;
+   MPI_Allreduce( MPI_IN_PLACE, &ierr, 1, MPI_INT, MPI_SUM, comm );
+   if( ierr != 0 ) {
+      printf("Could not allocate memory 2 \n");
+      if( ifaces != NULL ) free( ifaces );
+      if( jfaces != NULL ) free( jfaces );
+      if( rpoints != NULL ) free( rpoints );
+      if( qpoints != NULL ) free( qpoints );
+      free(icon);
+      free(jcon);
+      free(x1);
+      free(x2);
+      return(2);
+   }
+
+   // copy element connectivity (surface 1)
+
+   // copy vertex coefficients (surface 1)
+   for(i=0;i<nf1;++i) {
+      n = i*5;
+      for(j=0;j<4;++j) {
+         rpoints[ (i*4 + j)*3 + 0 ] = x1[ icon[n+1+j]*3 + 0 ];
+         rpoints[ (i*4 + j)*3 + 1 ] = x1[ icon[n+1+j]*3 + 1 ];
+         rpoints[ (i*4 + j)*3 + 2 ] = x1[ icon[n+1+j]*3 + 2 ];
+      }
+   }
+
+   // copy vertex coefficients (surface 2)
+   for(i=0;i<nf2;++i) {
+      n = i*5;
+      for(j=0;j<4;++j) {
+         qpoints[ (i*4 + j)*3 + 0 ] = x2[ jcon[n+1+j]*3 + 0 ];
+         qpoints[ (i*4 + j)*3 + 1 ] = x2[ jcon[n+1+j]*3 + 1 ];
+         qpoints[ (i*4 + j)*3 + 2 ] = x2[ jcon[n+1+j]*3 + 2 ];
+      }
+   }
+
+   //
+   // Use the library to resolve dependencies
+   // (In the following call, returned pointers are missing; they will be added
+   // when building the functionality is completed.)
+   //
+   ierr = incg_PerformFacematch( &comm, nf1, rpoints, nf2, qpoints );
+
+
+   //
+   // Clean up surface structures
+   //
+   free( ifaces );
+   free( jfaces );
+   free( rpoints );
+   free( qpoints );
    free(icon);
    free(jcon);
    free(x1);
    free(x2);
 
+   //
+   // Drop the communicator used in this process
+   //
    MPI_Comm_free( &comm );
    if( irank == 0 ) printf("Completed \n");
 
