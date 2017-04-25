@@ -244,7 +244,7 @@ int code( MPI_Comm *comp )
       }
    }
 
-#ifdef _DEBUG_
+#ifdef _DEBUG2_
 if(irank==0){
 char filename[20];
 sprintf( filename, "TEST.dat");
