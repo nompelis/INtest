@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <mpi.h>
 
+#ifdef __cplusplus
+#include <vector>
+#include <list>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,10 +25,24 @@ int incg_PerformFacematch( MPI_Comm *comm, int icnt1, int *ilist, double *x1,
 }
 #endif
 
+//
+// a structure to holde overlap data
+//
+struct overlap_s {
+   int iproc;
+   int ielem;
+   double a;
+};
+
 
 #ifdef __cplusplus
 extern "C" {
 
+
+//
+// The object that performs face-matching operations and creates appropriate
+// arrays
+//
 class incg_FaceMatcher {
  public:
    incg_FaceMatcher( MPI_Comm *comp );
@@ -56,7 +74,7 @@ class incg_FaceMatcher {
    double *rbuf;
    int *idata;
    double *rdata;
-
+   std::vector< std::list< overlap_s > > lists;
 };
 
 

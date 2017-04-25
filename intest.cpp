@@ -222,8 +222,8 @@ fclose(fp);
       int knt = jdst[n+1] - jdst[n];     // count of surface2 elements of "n"
 
       if( icnt[n] > 0 ) {                // have overlap with this process
-         idum = &( idata[ idis[n] ] );   // point straight into main arrays
-         rdum = &( rdata[ idis[n] ] );
+         idum = &( idata[ 5*idis[n] ] ); // point straight into main arrays
+         rdum = &( rdata[ 4*3*idis[n] ] );
       } else {
          idum = ibuf;                    // point into the buffers
          rdum = rbuf;
@@ -237,6 +237,12 @@ fclose(fp);
                rdum[ ii*3 + 1 ] = xj[ ii*3 + 1 ];
                rdum[ ii*3 + 2 ] = xj[ ii*3 + 2 ];
             }
+
+            idum[ i*5 + 0 ] = i*1000 + 111;  // HACK
+            idum[ i*5 + 1 ] = i*1000 + 222;  // HACK
+            idum[ i*5 + 2 ] = i*1000 + 333;  // HACK
+            idum[ i*5 + 3 ] = i*1000 + 444;  // HACK
+            idum[ i*5 + 4 ] = i*1000 + 555;  // HACK
          }
       }
 
@@ -265,10 +271,61 @@ fclose(fp);
 #endif
    }
 
+   // drop the buffers used for transfers
+   free( ibuf ); ibuf = NULL;
+   free( rbuf ); rbuf = NULL;
+   nbuf_size  = 0;
 
+   // prepare the lists
+   for(n=0;n<nproc;++n) {
+      std::list< overlap_s > ltmp;
 
+      lists.push_back( ltmp );
 
+#ifdef _DEBUG_
+      if( irank == 0 ) {
+         printf("Overlap list for process %d at %p, size %ld \n",
+                irank, &( lists[n] ), lists[n].size() );
+      }
+#endif
+   }
 
+// test the lists for memory issues
+#ifdef _DEBUG_
+   for(n=0;n<nproc;++n) {
+      std::list< overlap_s > *lp = &( lists[n] );
+      struct overlap_s odum;
+
+      for(int i=idis[n];i<idis[n]+icnt[n];++i) {
+         odum.ielem = i - idis[n];
+         odum.a     = -9999.9;  // HACK
+         odum.a     = (double) ( idata[i*5 + 0] );
+         lp->push_back( odum );
+      }
+   }
+
+if(irank==0){    // CHANGE THE PROCESS NUMBER TO TEST OTHER PROCESSES
+char filename[20];
+sprintf( filename, "LIST_%.5d.dat", n);
+FILE *fp = fopen( filename, "w" );
+   fprintf( fp, "###### Process %d collected data in lists ###### \n", irank );
+
+   for(n=0;n<nproc;++n) {
+      fprintf( fp, "### Process %d ### \n", n );
+
+      std::list< overlap_s > *lp = &( lists[n] );
+      fprintf( fp, " %ld \n", lp->size() );
+
+      std::list< overlap_s > :: iterator il;
+      for( il = lp->begin(); il != lp->end(); ++ il ) {
+      // struct overlap_s *odum = (struct overlap_s *) il;
+
+         fprintf( fp, " %d %lf \n", (*il).ielem, (*il).a );
+      }
+   }
+fclose(fp);
+}
+#endif
 
    return(0);
 }
