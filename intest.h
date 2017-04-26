@@ -53,6 +53,7 @@ class incg_FaceMatcher {
    void setAccel( int *ibs_ );
 
    int prepare( void );
+   int perform( void );
 
  protected:
 

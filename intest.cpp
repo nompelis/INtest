@@ -197,7 +197,7 @@ if(irank==0) for(n=0;n<nproc;++n)
 n = irank;
 if(irank==n){    // CHANGE THE PROCESS NUMBER TO TEST OTHER PROCESSES
 char filename[20];
-sprintf( filename, "TEST_%.5d.dat", n);
+sprintf( filename, "TEST_%.5d.dat", n );
 FILE *fp = fopen( filename, "w" );
 int knt = nel2;
 fprintf(fp,"variables = x y z\n");
@@ -253,7 +253,7 @@ fclose(fp);
 #ifdef _DEBUG_
 if(irank==0){    // CHANGE THE PROCESS NUMBER TO TEST OTHER PROCESSES
 char filename[20];
-sprintf( filename, "TEST_%.5d.dat", n);
+sprintf( filename, "TEST_%.5d.dat", irank );
 FILE *fp = fopen( filename, "w" );
 fprintf(fp,"variables = x y z\n");
 fprintf(fp,"zone T=\"test_%d\", N=%d, E=%d, F=FEPOINT, ET=QUADRILATERAL\n",
@@ -276,8 +276,8 @@ fclose(fp);
    free( rbuf ); rbuf = NULL;
    nbuf_size  = 0;
 
-   // prepare the lists
-   for(n=0;n<nproc;++n) {
+   // prepare the lists of overlaps for each owned element of surface 1
+   for(n=0;n<nel1;++n) {
       std::list< overlap_s > ltmp;
 
       lists.push_back( ltmp );
@@ -290,28 +290,40 @@ fclose(fp);
 #endif
    }
 
-// test the lists for memory issues
+   return(0);
+}
+
+//
+// Method to perform the face-matching
+//
+int incg_FaceMatcher::perform( void )
+{
+   int n;
+   double xyz1[4*3], xyz2[4*3];
+   int ierr = 0;
+
+
+
+
+
 #ifdef _DEBUG_
-   for(n=0;n<nproc;++n) {
-      std::list< overlap_s > *lp = &( lists[n] );
-      struct overlap_s odum;
-
-      for(int i=idis[n];i<idis[n]+icnt[n];++i) {
-         odum.ielem = i - idis[n];
-         odum.a     = -9999.9;  // HACK
-         odum.a     = (double) ( idata[i*5 + 0] );
-         lp->push_back( odum );
-      }
+   MPI_Barrier( comm );
+   if( irank == 0 ) {
+      for(n=0;n<nel1;++n)
+         printf("Overlap list after filling for process %d at %p, size %ld \n",
+                irank, &( lists[n] ), lists[n].size() );
    }
+#endif
 
-if(irank==0){    // CHANGE THE PROCESS NUMBER TO TEST OTHER PROCESSES
+#ifdef _DEBUG_
+if(irank==irank){    // CHANGE THE PROCESS NUMBER TO TEST OTHER PROCESSES
 char filename[20];
-sprintf( filename, "LIST_%.5d.dat", n);
+sprintf( filename, "LIST_%.5d.dat", irank );
 FILE *fp = fopen( filename, "w" );
-   fprintf( fp, "###### Process %d collected data in lists ###### \n", irank );
+   fprintf( fp, "###### Process %d element overlaps ###### \n", irank );
 
-   for(n=0;n<nproc;++n) {
-      fprintf( fp, "### Process %d ### \n", n );
+   for(n=0;n<nel1;++n) {
+      fprintf( fp, "### Element %d ### \n", n );
 
       std::list< overlap_s > *lp = &( lists[n] );
       fprintf( fp, " %ld \n", lp->size() );
@@ -320,7 +332,7 @@ FILE *fp = fopen( filename, "w" );
       for( il = lp->begin(); il != lp->end(); ++ il ) {
       // struct overlap_s *odum = (struct overlap_s *) il;
 
-         fprintf( fp, " %d %lf \n", (*il).ielem, (*il).a );
+         fprintf( fp, " %d %d %lf \n", (*il).iproc, (*il).ielem, (*il).a );
       }
    }
 fclose(fp);
@@ -329,7 +341,6 @@ fclose(fp);
 
    return(0);
 }
-
 
 
 
@@ -363,6 +374,10 @@ int ijunk[] = {
 
    // method to create internal structures
    ierr = fm.prepare();
+   if( ierr != 0 ) return(1);
+
+   // method to perform face-matching
+   ierr = fm.perform();
    if( ierr != 0 ) return(1);
 
 
