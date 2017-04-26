@@ -361,12 +361,35 @@ int incg_FaceMatcher::perform( void )
 #endif
 
             // invoke an overlap function
-            printf("AREA= %lf \n", (*overlap_func)( ic1, xyz1, ic2, xyz2 ) );
+            double area = (*overlap_func)( ic1, xyz1, ic2, xyz2 );
+         // printf("AREA= %lf \n", area );
+
+            if( area > 0.0 ) {
+               // perform sanity check
+               if( n != idata[j*5 + 1] ) { ierr = 1; }
+
+               struct overlap_s otmp;
+               // assign structure members
+               otmp.iproc = n;
+               otmp.ielem = idata[j*5 + 2];
+               otmp.a = area;
+               // add overlap to element
+               lists[i].push_back( otmp );
+            }
 
          }
       }
    }
 
+   //
+   // deal with any sanity check errors
+   //
+   MPI_Allreduce( MPI_IN_PLACE, &ierr, 1, MPI_INT, MPI_SUM, comm );
+   if( ierr != 0 ) {
+      if( irank == 0 ) printf("SANITY CHECK FAILED IN OVERLAP TESTS!\n");
+
+      return(1);
+   }
 
 #ifdef _DEBUG_
    MPI_Barrier( comm );
@@ -400,6 +423,8 @@ FILE *fp = fopen( filename, "w" );
 fclose(fp);
 }
 #endif
+
+
 
    return(0);
 }

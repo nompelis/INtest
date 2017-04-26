@@ -99,6 +99,9 @@ double my_overlap_function( int n, const double *xyz1,
 {
    double area = -99999.0;
 
+//// make every element overlap with every one for testing purposes
+   area = 1.0;
+
    return( area );
 }
 
