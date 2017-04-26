@@ -131,6 +131,7 @@ int code( MPI_Comm *comp )
    //
    // Dump the structures
    //
+#ifdef _DEBUG_
    if( irank == 0 ) {    // select an MPI process manually (hardwired) here
       FILE *fp = fopen("FACES.dat","w");
 
@@ -163,6 +164,7 @@ int code( MPI_Comm *comp )
       fclose(fp);
    }
    MPI_Barrier( comm );
+#endif
 
 
    //
