@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include "intest.h"
+//#include <unistd.h> // HACK remove after done with sleep()
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,6 +37,8 @@ incg_FaceMatcher::incg_FaceMatcher( MPI_Comm *comp )
 
    idst = NULL;
    jdst = NULL;
+
+   overlap_func = NULL;
 
 #ifdef _DEBUG_
    if( irank == 0 ) printf("incg_FaceMatcher object instantiated\n");
@@ -200,8 +203,9 @@ char filename[20];
 sprintf( filename, "TEST_%.5d.dat", n );
 FILE *fp = fopen( filename, "w" );
 int knt = nel2;
+fprintf(fp,"### surface 1 ### \n");
 fprintf(fp,"variables = x y z\n");
-fprintf(fp,"zone T=\"test_%d\", N=%d, E=%d, F=FEPOINT, ET=QUADRILATERAL\n",
+fprintf(fp,"zone T=\"own_%d\", N=%d, E=%d, F=FEPOINT, ET=QUADRILATERAL\n",
     n, 4*knt, knt );
 for(int i=0;i<knt*4;++i) {
 for(int k=0;k<3;++k) {
@@ -238,9 +242,9 @@ fclose(fp);
                rdum[ ii*3 + 2 ] = xj[ ii*3 + 2 ];
             }
 
-            idum[ i*5 + 0 ] = i*1000 + 111;  // HACK
-            idum[ i*5 + 1 ] = i*1000 + 222;  // HACK
-            idum[ i*5 + 2 ] = i*1000 + 333;  // HACK
+            idum[ i*5 + 0 ] = jcon[i*5 + 0]; // number of nodes of element
+            idum[ i*5 + 1 ] = irank;         // owner/sender process
+            idum[ i*5 + 2 ] = i;             // index in owner process
             idum[ i*5 + 3 ] = i*1000 + 444;  // HACK
             idum[ i*5 + 4 ] = i*1000 + 555;  // HACK
          }
@@ -250,11 +254,12 @@ fclose(fp);
       MPI_Bcast( rdum, 4*3*knt, MPI_DOUBLE, n, comm );
 
       if( irank == 0 ) printf("Broadcast completed for process %d \n", n);
-#ifdef _DEBUG_
+#ifdef _DEBUG2_
 if(irank==0){    // CHANGE THE PROCESS NUMBER TO TEST OTHER PROCESSES
 char filename[20];
-sprintf( filename, "TEST_%.5d.dat", irank );
+sprintf( filename, "TEST_%.5d_%.5d.dat", irank, n );
 FILE *fp = fopen( filename, "w" );
+fprintf(fp,"### incoming surface 2 ### \n");
 fprintf(fp,"variables = x y z\n");
 fprintf(fp,"zone T=\"test_%d\", N=%d, E=%d, F=FEPOINT, ET=QUADRILATERAL\n",
     n, 4*knt, knt );
@@ -302,8 +307,65 @@ int incg_FaceMatcher::perform( void )
    double xyz1[4*3], xyz2[4*3];
    int ierr = 0;
 
+   //
+   // sanity check
+   //
+   if( overlap_func == NULL ) {
+      if( irank == 0 ) printf("No overlap-test function pointer provided \n");
+      return(1);
+   }
 
+   //
+   // Loop over all surface 1 elems and match against accumulated per-proc elems
+   //
+   for(int i=0;i<nel1;++i) {
+      int ic1 = icon[i*5 + 0];
 
+      for(int mm=0;mm<4;++mm) {
+         for(int nn=0;nn<3;++nn) {
+            xyz1[mm*3 + nn] = xi[i*4*3 + mm*3 + nn];
+      }}
+#ifdef _DEBUG2_
+  if(irank==0) {
+     printf("ELEMENT: %d \n", i );
+     for(int mm=0;mm<ic1;++mm) {
+        printf(" %lf %lf %lf \n",
+           xyz1[mm*3 + 0],
+           xyz1[mm*3 + 2],
+           xyz1[mm*3 + 1] );
+     }
+  }
+#endif
+
+      for(n=0;n<nproc;++n) {
+         for(int j=idis[n];j<idis[n]+icnt[n];++j) {
+//if(irank==0) printf("QUERYING: %d   %d,%d \n", i, n, j );
+
+            int ic2 = idata[i*5 + 0];
+            for(int mm=0;mm<4;++mm) {
+               for(int nn=0;nn<3;++nn) {
+                  xyz2[mm*3 + nn] = rdata[j*4*3 + mm*3 + nn];
+            }}
+
+#ifdef _DEBUG2_
+  if(irank==0) {
+     printf("OTHER ELEMENT: (proc %d) %d \n", n,j );
+     for(int mm=0;mm<ic2;++mm) {
+        printf(" %lf %lf %lf \n",
+           xyz2[mm*3 + 0],
+           xyz2[mm*3 + 2],
+           xyz2[mm*3 + 1] );
+     }
+  }
+//sleep(1);
+#endif
+
+            // invoke an overlap function
+            printf("AREA= %lf \n", (*overlap_func)( ic1, xyz1, ic2, xyz2 ) );
+
+         }
+      }
+   }
 
 
 #ifdef _DEBUG_
@@ -315,7 +377,7 @@ int incg_FaceMatcher::perform( void )
    }
 #endif
 
-#ifdef _DEBUG_
+#ifdef _DEBUG2_
 if(irank==irank){    // CHANGE THE PROCESS NUMBER TO TEST OTHER PROCESSES
 char filename[20];
 sprintf( filename, "LIST_%.5d.dat", irank );
@@ -342,6 +404,24 @@ fclose(fp);
    return(0);
 }
 
+
+//
+// Setter method to assign the internal function pointer to the external
+// overlap-test function.
+//
+void incg_FaceMatcher::setOverlapFunction( 
+                          double (*func)( int n, const double *xyz1,
+                                          int m, const double *xyz2 ) )
+{
+   overlap_func = func;
+}
+
+
+//
+// Global pointer variable to an external function to perform the overlap
+//
+double (*incg_FaceOverlapFunction)( int n, const double *xyz1,
+                                    int m, const double *xyz2 ) = NULL;
 
 
 //
@@ -375,6 +455,10 @@ int ijunk[] = {
    // method to create internal structures
    ierr = fm.prepare();
    if( ierr != 0 ) return(1);
+
+   // set pointer to external function to perform face-matching
+   // (See notes on how to set externally the variable that is the argument!)
+   fm.setOverlapFunction( incg_FaceOverlapFunction );
 
    // method to perform face-matching
    ierr = fm.perform();

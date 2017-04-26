@@ -54,6 +54,8 @@ class incg_FaceMatcher {
 
    int prepare( void );
    int perform( void );
+   void setOverlapFunction( double (*func)( int n, const double *xyz1,
+                                            int m, const double *xyz2 ) );
 
  protected:
 
@@ -76,6 +78,8 @@ class incg_FaceMatcher {
    int *idata;
    double *rdata;
    std::vector< std::list< overlap_s > > lists;
+   double (*overlap_func)( int n, const double *xyz1,
+                           int m, const double *xyz2 );
 };
 
 

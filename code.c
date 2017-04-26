@@ -79,6 +79,30 @@ int make_faces( int im, int jm,
 }
 
 
+//
+// External (library) pointer to function that will be testing for overlaps
+// This variable is a global variable in the face-matching library. It is
+// a pointer to a fcuntion with appropriate arguments. The C code outside the
+// library will have to set this library's global variable ahead of time. In
+// this way the library uses an external function to test for overlaps; it is
+// not part of the library.
+//
+extern double (*incg_FaceOverlapFunction)( int n, const double *xyz1,
+                                           int m, const double *xyz2 );
+
+//
+// A function to be built by the user in order to perform overlap testing
+// (This function presently returns a negative number, which implies no overlap)
+//
+double my_overlap_function( int n, const double *xyz1,
+                            int m, const double *xyz2 )
+{
+   double area = -99999.0;
+
+   return( area );
+}
+
+
 int code( MPI_Comm *comp )
 {
    MPI_Comm comm;
@@ -266,6 +290,11 @@ fclose(fp);
 }
 #endif
 
+
+   //
+   // Assign the global pointer of the library to the user function here
+   //
+   incg_FaceOverlapFunction = &my_overlap_function;
 
    //
    // Use the library to resolve dependencies
