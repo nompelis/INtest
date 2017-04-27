@@ -300,13 +300,18 @@ fclose(fp);
    incg_FaceOverlapFunction = &my_overlap_function;
 
    //
-   // Use the library to resolve dependencies
-   // (In the following call, returned pointers are missing; they will be added
-   // when building the functionality is completed.)
+   // Use the library to resolve dependencies as a test
    //
 //while(1) /// LOOP to check for memory leaks
    ierr = incg_PerformFacematch( &comm, nf1, ifaces, rpoints,
                                         nf2, jfaces, qpoints );
+
+   //
+   // We will initialize a face-matching object by requesting that a handle is
+   // created for us. The handle will be assocaited internally with an object.
+   //
+
+
 
 
    //

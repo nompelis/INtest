@@ -547,9 +547,11 @@ int incg_FaceMatcher::getSizeSend( void ) const
 }
 
 
-
 //
 // API function to invoke the functionality from the C side
+// (This function is meant to test the first stage of the object's operation
+// and is not going to be used when this functionality is made into a library.
+// It is supposed to perform the basic matching operations and then clean up.)
 //
 int incg_PerformFacematch( MPI_Comm *comm, int icnt1, int *ilist, double *x1,
                                            int icnt2, int *jlist, double *x2 )
@@ -594,6 +596,12 @@ int ijunk[] = {
 
    return(0);
 }
+
+
+//
+// Global vector of face-matcher objects
+//
+std::vector< incg_FaceMatcher * > global_fm_objects;
 
 
 
