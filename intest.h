@@ -34,6 +34,10 @@ int incg_Facematch_Init( int *handle, MPI_Comm *comm,
 //
 int incg_Facematch_Term( int *handle );
 
+//
+// API function prototype to retreive sizes from the object
+//
+int incg_Facematch_GetSizes( int *handle, int *num_recv, int *num_send );
 
 
 #ifdef __cplusplus

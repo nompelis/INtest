@@ -695,6 +695,25 @@ int incg_Facematch_Term( int *handle )
    return(0);
 }
 
+//
+// API function prototype to retreive sizes from the object
+//
+int incg_Facematch_GetSizes( int *handle, int *num_recv, int *num_send )
+{
+   if( *handle >= (int) (global_fm_objects.size()) ) return(1);
+
+   if( global_fm_objects[ *handle ] == NULL ) return(2);
+
+   incg_FaceMatcher *fm = global_fm_objects[ *handle ];
+
+   *num_recv = fm->getSizeRecv();
+   *num_send = fm->getSizeSend();
+
+   return(0);
+}
+
+
+
 
 
 }  // extern C
