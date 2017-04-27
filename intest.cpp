@@ -548,6 +548,21 @@ int incg_FaceMatcher::getSizeSend( void ) const
 
 
 //
+// Getter method to return the sending count size
+//
+int incg_FaceMatcher::formArrays(
+                   int *irecv_, int *isend_, double *area_, 
+                   int *irdis_, int *ircnt_, int *isdis_, int *iscnt_ )
+{
+   if( irank == 0 ) printf("Call to deliver arrays \n");
+
+
+
+   return(0);
+}
+
+
+//
 // API function to invoke the functionality from the C side
 // (This function is meant to test the first stage of the object's operation
 // and is not going to be used when this functionality is made into a library.
@@ -679,7 +694,7 @@ int ijunk[] = {
 
 
 //
-// API function prototype to deconstruct a handle's object
+// API function to deconstruct a handle's object
 //
 int incg_Facematch_Term( int *handle )
 {
@@ -696,7 +711,7 @@ int incg_Facematch_Term( int *handle )
 }
 
 //
-// API function prototype to retreive sizes from the object
+// API function to retreive sizes from the handle's object
 //
 int incg_Facematch_GetSizes( int *handle, int *num_recv, int *num_send )
 {
@@ -708,6 +723,28 @@ int incg_Facematch_GetSizes( int *handle, int *num_recv, int *num_send )
 
    *num_recv = fm->getSizeRecv();
    *num_send = fm->getSizeSend();
+
+   return(0);
+}
+
+//
+// API function prototype to retreive array data from the handle's object
+//
+int incg_Facematch_FillArrays( int *handle,
+                               int *isend, int *irecv, double *recv_area,
+                               int *irdis, int *ircnt, int *isdis, int *iscnt )
+{
+   if( *handle >= (int) (global_fm_objects.size()) ) return(1);
+
+   if( global_fm_objects[ *handle ] == NULL ) return(2);
+
+   incg_FaceMatcher *fm = global_fm_objects[ *handle ];
+
+
+   // get the array data
+   fm->formArrays( isend, irecv, recv_area, irdis, ircnt, isdis, iscnt );
+
+
 
    return(0);
 }

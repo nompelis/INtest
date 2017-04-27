@@ -39,6 +39,12 @@ int incg_Facematch_Term( int *handle );
 //
 int incg_Facematch_GetSizes( int *handle, int *num_recv, int *num_send );
 
+//
+// API function prototype to retreive array data from the object
+//
+int incg_Facematch_FillArrays( int *handle,
+                               int *isend, int *irecv, double *recv_area,
+                               int *irdis, int *ircnt, int *isdis, int *iscnt );
 
 #ifdef __cplusplus
 }
@@ -78,6 +84,9 @@ class incg_FaceMatcher {
 
    int getSizeRecv( void ) const;
    int getSizeSend( void ) const;
+
+   int formArrays( int *irecv_, int *isend_, double *area_,
+                   int *irdis_, int *ircnt_, int *isdis_, int *iscnt_ );
 
  protected:
 

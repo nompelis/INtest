@@ -318,7 +318,38 @@ fclose(fp);
    int num_recv, num_send;
    ierr = incg_Facematch_GetSizes( &ihandle, &num_recv, &num_send );
 
+   int *irdis,*ircnt,*isdis,*iscnt;
+   int *irecv,*isend;
+   double *recv_area;
 
+   irecv = (int *) malloc(num_recv*sizeof(int));
+   isend = (int *) malloc(num_send*sizeof(int));
+   recv_area = (double *) malloc(num_send*sizeof(double));
+   irdis = (int *) malloc(nproc*sizeof(int));
+   ircnt = (int *) malloc(nproc*sizeof(int));
+   isdis = (int *) malloc(nproc*sizeof(int));
+   iscnt = (int *) malloc(nproc*sizeof(int));
+   if( irecv == NULL || 
+       isend == NULL || 
+       recv_area == NULL || 
+       irdis == NULL || 
+       ircnt == NULL || 
+       isdis == NULL || 
+       iscnt == NULL ) { ierr = 1; }
+   MPI_Allreduce( MPI_IN_PLACE, &ierr, 1, MPI_INT, MPI_SUM, comm );
+   if( ierr != 0 ) {
+      free( isend );
+      free( irecv );
+      free( recv_area );
+      free( irdis );
+      free( ircnt );
+      free( isdis );
+      free( iscnt );
+   }
+
+   ierr = incg_Facematch_FillArrays( &ihandle,
+                              isend, irecv, recv_area,
+                              irdis, ircnt, isdis, iscnt );
 
 
    ierr = incg_Facematch_Term( &ihandle );
