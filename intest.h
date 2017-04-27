@@ -57,6 +57,9 @@ class incg_FaceMatcher {
    void setOverlapFunction( double (*func)( int n, const double *xyz1,
                                             int m, const double *xyz2 ) );
 
+   int getSizeRecv( void ) const;
+   int getSizeSend( void ) const;
+
  protected:
 
  private:

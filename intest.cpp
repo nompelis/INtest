@@ -508,10 +508,6 @@ fclose(fp);
    }
 #endif
 
-
-
-
-
    return(0);
 }
 
@@ -534,6 +530,23 @@ void incg_FaceMatcher::setOverlapFunction(
 double (*incg_FaceOverlapFunction)( int n, const double *xyz1,
                                     int m, const double *xyz2 ) = NULL;
 
+//
+// Getter method to return the receiving count size
+//
+int incg_FaceMatcher::getSizeRecv( void ) const
+{
+   return( nelem_recv );
+}
+
+//
+// Getter method to return the sending count size
+//
+int incg_FaceMatcher::getSizeSend( void ) const
+{
+   return( nelem_send );
+}
+
+
 
 //
 // API function to invoke the functionality from the C side
@@ -549,37 +562,40 @@ int incg_PerformFacematch( MPI_Comm *comm, int icnt1, int *ilist, double *x1,
 
 
    // constructing the object
-   incg_FaceMatcher fm( comm );
+   incg_FaceMatcher *fm = new incg_FaceMatcher( comm );
 
    // provide variables to the object
-   fm.setData( icnt1, ilist, x1,  icnt2, jlist, x2 );
+   fm->setData( icnt1, ilist, x1,  icnt2, jlist, x2 );
 
    // call this if we are using some pre-search-based acceleration technique
-   (void) fm.setAccel( NULL );
+   (void) fm->setAccel( NULL );
    // (this is a test)
 int ijunk[] = {
  1, 0, 1, 1, 1, 1, 1, 1, 1, 1,
  1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
  1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-   (void) fm.setAccel( ijunk );
+   (void) fm->setAccel( ijunk );
 
    // method to create internal structures
-   ierr = fm.prepare();
+   ierr = fm->prepare();
    if( ierr != 0 ) return(1);
 
    // set pointer to external function to perform face-matching
    // (See notes on how to set externally the variable that is the argument!)
-   fm.setOverlapFunction( incg_FaceOverlapFunction );
+   fm->setOverlapFunction( incg_FaceOverlapFunction );
 
    // method to perform face-matching
-   ierr = fm.perform();
+   ierr = fm->perform();
    if( ierr != 0 ) return(1);
 
 
-
+   // drop object
+   delete fm;
 
    return(0);
 }
+
+
 
 
 }
