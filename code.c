@@ -310,17 +310,20 @@ fclose(fp);
    // We will initialize a face-matching object by requesting that a handle is
    // created for us. The handle will be assocaited internally with an object.
    //
+   int ihandle;
+//while(1) {
+   ierr = incg_Facematch_Init( &ihandle, &comm, nf1, ifaces, rpoints,
+                                                nf2, jfaces, qpoints, NULL );
 
-   int ihandle1,ihandle2;
-while(1) {
-   // test of creating and freeing in an interleaved manner
-   ierr = incg_Facematch_Init( &ihandle1, &comm, nf1, ifaces, rpoints,
-                                                 nf2, jfaces, qpoints, NULL );
-   ierr = incg_Facematch_Init( &ihandle2, &comm, nf1, ifaces, rpoints,
-                                                 nf2, jfaces, qpoints, NULL );
-   ierr = incg_Facematch_Term( &ihandle2 );
-   ierr = incg_Facematch_Term( &ihandle1 );
-}
+   int num_recv, num_send;
+   ierr = incg_Facematch_GetSizes( &ihandle, &num_recv, &num_send );
+
+
+
+
+   ierr = incg_Facematch_Term( &ihandle );
+//}
+
 
 
    //
