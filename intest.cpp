@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
+#include <indsde.h>
 
 #include "intest.h"
 //#include <unistd.h> // HACK remove after done with sleep()
@@ -40,6 +41,9 @@ incg_FaceMatcher::incg_FaceMatcher( MPI_Comm *comp )
 
    overlap_func = NULL;
 
+   isdis = NULL;
+   iscnt = NULL;
+
 #ifdef _DEBUG_
    if( irank == 0 ) printf("incg_FaceMatcher object instantiated\n");
 #endif
@@ -59,6 +63,9 @@ incg_FaceMatcher::~incg_FaceMatcher( )
 
    if( idst != NULL ) free( idst );
    if( jdst != NULL ) free( jdst );
+
+   if( isdis != NULL ) free( isdis );
+   if( iscnt != NULL ) free( iscnt );
 
 #ifdef _DEBUG_
    if( irank == 0 ) printf("incg_FaceMatcher object deconstructed \n");
@@ -289,8 +296,8 @@ fclose(fp);
 
 #ifdef _DEBUG_
       if( irank == 0 ) {
-         printf("Overlap list for process %d at %p, size %ld \n",
-                irank, &( lists[n] ), lists[n].size() );
+         printf("Overlap list (elem %d) for process %d at %p, size %ld \n",
+                n, irank, &( lists[n] ), lists[n].size() );
       }
 #endif
    }
@@ -388,15 +395,15 @@ int incg_FaceMatcher::perform( void )
    if( ierr != 0 ) {
       if( irank == 0 ) printf("SANITY CHECK FAILED IN OVERLAP TESTS!\n");
 
-      return(1);
+      return(2);
    }
 
 #ifdef _DEBUG_
    MPI_Barrier( comm );
    if( irank == 0 ) {
       for(n=0;n<nel1;++n)
-         printf("Overlap list after filling for process %d at %p, size %ld \n",
-                irank, &( lists[n] ), lists[n].size() );
+         printf("Overlap list (elem %d) post filling for process %d at %p, size %ld\n",
+                n, irank, &( lists[n] ), lists[n].size() );
    }
 #endif
 
@@ -423,6 +430,85 @@ FILE *fp = fopen( filename, "w" );
 fclose(fp);
 }
 #endif
+
+
+   //
+   // drop arrays (that now live in expanded form in the list containers)
+   // clean-up counters and displacements for re-using
+   //
+   free( ibuf ); ibuf = NULL;
+   free( rbuf ); rbuf = NULL;
+   for(n=0;n<nproc;++n) {
+      icnt[n] = 0;
+      idis[n] = 0;
+   }
+
+   //
+   // Count per-process data depndencies
+   // (The counts correspond to elements of surface2 in each process that
+   // overlap with local surface1 elements.)
+   //
+   for(n=0;n<nel1;++n) {
+      std::list< overlap_s > *lp = &( lists[n] );
+      std::list< overlap_s > :: iterator il;
+      for( il = lp->begin(); il != lp->end(); ++ il ) {
+         int ip = (*il).iproc;
+         icnt[ip] += 1;
+      }
+   }
+   // build displacement array
+   for(n=1;n<nproc;++n) idis[n] = idis[n-1] + icnt[n-1];
+   nelem_recv = idis[nproc-1] + icnt[nproc-1];
+
+#ifdef _DEBUG_
+   MPI_Barrier( comm );
+   if( irank == 0 ) {
+      printf("Process %d reporting \n", irank );
+      for(n=0;n<nproc;++n)
+         printf(" Rank: %d   Displacement: %d   Count: %d \n",
+                n, idis[n], icnt[n] );
+      printf("Total number of items to receive: %d \n", nelem_recv );
+   }
+#endif
+
+   //
+   // create arrays to use for equivalent sending counts and displacements
+   //
+   size_t isize = (size_t) nproc;
+   isdis = (int *) malloc(isize*sizeof(int));
+   iscnt = (int *) malloc(isize*sizeof(int));
+   if( isdis == NULL || iscnt == NULL ) ierr = 1;
+   MPI_Allreduce( MPI_IN_PLACE, &ierr, 1, MPI_INT, MPI_SUM, comm );
+   if( ierr != 0 ) {
+      if( irank == 0 ) printf("Could not allocate arrays in perform()\n");
+      if( isdis != NULL) free( isdis ); isdis = NULL;
+      if( iscnt != NULL) free( iscnt ); iscnt = NULL;
+      return(-1);
+   }
+
+   //
+   // negotiate sending counts and form displacement
+   //
+   ierr = inMPI_DSDE_Global_WindowExchange( nproc, irank, comm, icnt, iscnt );
+   if( ierr != 0 ) return(3);
+
+   isdis[0] = 0;
+   for(n=0;n<nproc;++n) isdis[n] = isdis[n-1] + iscnt[n-1];
+   nelem_send = isdis[nproc-1] + iscnt[nproc-1];
+
+#ifdef _DEBUG_
+   MPI_Barrier( comm );
+   // in the present test diagnostic irank=1 should have all zeros
+   if( irank == 0 ) {
+      printf("Process %d reporting \n", irank );
+      for(n=0;n<nproc;++n)
+         printf(" Rank: %d   Displacement: %d   Count: %d \n",
+                n, isdis[n], iscnt[n] );
+      printf("Total number of items to send: %d \n", nelem_send );
+   }
+#endif
+
+
 
 
 

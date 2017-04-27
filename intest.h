@@ -80,6 +80,9 @@ class incg_FaceMatcher {
    std::vector< std::list< overlap_s > > lists;
    double (*overlap_func)( int n, const double *xyz1,
                            int m, const double *xyz2 );
+
+   int nelem_recv, nelem_send;
+   int *isdis,*iscnt;
 };
 
 
