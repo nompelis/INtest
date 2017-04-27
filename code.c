@@ -303,15 +303,24 @@ fclose(fp);
    // Use the library to resolve dependencies as a test
    //
 //while(1) /// LOOP to check for memory leaks
-   ierr = incg_PerformFacematch( &comm, nf1, ifaces, rpoints,
-                                        nf2, jfaces, qpoints );
+// ierr = incg_PerformFacematch( &comm, nf1, ifaces, rpoints,
+//                                      nf2, jfaces, qpoints );
 
    //
    // We will initialize a face-matching object by requesting that a handle is
    // created for us. The handle will be assocaited internally with an object.
    //
 
-
+   int ihandle1,ihandle2;
+while(1) {
+   // test of creating and freeing in an interleaved manner
+   ierr = incg_Facematch_Init( &ihandle1, &comm, nf1, ifaces, rpoints,
+                                                 nf2, jfaces, qpoints, NULL );
+   ierr = incg_Facematch_Init( &ihandle2, &comm, nf1, ifaces, rpoints,
+                                                 nf2, jfaces, qpoints, NULL );
+   ierr = incg_Facematch_Term( &ihandle2 );
+   ierr = incg_Facematch_Term( &ihandle1 );
+}
 
 
    //

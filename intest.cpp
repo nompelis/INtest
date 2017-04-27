@@ -580,7 +580,10 @@ int ijunk[] = {
 
    // method to create internal structures
    ierr = fm->prepare();
-   if( ierr != 0 ) return(1);
+   if( ierr != 0 ) {
+      delete fm;
+      return(1);
+   }
 
    // set pointer to external function to perform face-matching
    // (See notes on how to set externally the variable that is the argument!)
@@ -588,8 +591,10 @@ int ijunk[] = {
 
    // method to perform face-matching
    ierr = fm->perform();
-   if( ierr != 0 ) return(1);
-
+   if( ierr != 0 ) {
+      delete fm;
+      return(2);
+   }
 
    // drop object
    delete fm;
@@ -604,8 +609,94 @@ int ijunk[] = {
 std::vector< incg_FaceMatcher * > global_fm_objects;
 
 
+//
+// API function prototype to instantiate an object and return a handle
+//
+int incg_Facematch_Init( int *handle, MPI_Comm *comm,
+                                           int icnt1, int *ilist, double *x1,
+                                           int icnt2, int *jlist, double *x2,
+                                           int *iacc )
+{
+   int nproc,irank;
+   MPI_Comm_size( *comm, &nproc );
+   MPI_Comm_rank( *comm, &irank );
+   printf("The function was invoked by MPI process %d \n", irank);
+   int ierr=0;
 
 
+   // constructing the object
+   incg_FaceMatcher *fm = new incg_FaceMatcher( comm );
+
+   // provide variables to the object
+   fm->setData( icnt1, ilist, x1,  icnt2, jlist, x2 );
+
+   // call this if we are using some pre-search-based acceleration technique
+   (void) fm->setAccel( iacc );
+   // (this is a test)
+int ijunk[] = {
+ 1, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+   (void) fm->setAccel( ijunk );
+
+   // method to create internal structures
+   ierr = fm->prepare();
+   if( ierr != 0 ) {
+      delete fm;
+      return(1);
+   }
+
+   // set pointer to external function to perform face-matching
+   // (See notes on how to set externally the variable that is the argument!)
+   fm->setOverlapFunction( incg_FaceOverlapFunction );
+
+   // method to perform face-matching
+   ierr = fm->perform();
+   if( ierr != 0 ) {
+      delete fm;
+      return(2);
+   }
+
+
+   //
+   // place the object in the vector
+   //
+   int iplace=-1,k=0;
+   while( k < (int) (global_fm_objects.size()) ) {
+      if( global_fm_objects[k] == NULL ) iplace = k;
+      ++k;
+   }
+   if( iplace == -1 ) {
+      global_fm_objects.push_back( fm );
+      *handle = (int) (global_fm_objects.size()) - 1;
+   } else {
+      global_fm_objects[ iplace ] = fm;
+      *handle = iplace;
+   }
+
+   return(0);
 }
+
+
+//
+// API function prototype to deconstruct a handle's object
+//
+int incg_Facematch_Term( int *handle )
+{
+   if( *handle >= (int) (global_fm_objects.size()) ) return(1);
+
+   if( global_fm_objects[ *handle ] == NULL ) return(2);
+
+   incg_FaceMatcher *fm = global_fm_objects[ *handle ];
+   delete fm;
+
+   global_fm_objects[ *handle ] = NULL;
+
+   return(0);
+}
+
+
+
+}  // extern C
 #endif
 

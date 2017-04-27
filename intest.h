@@ -21,6 +21,21 @@ extern "C" {
 int incg_PerformFacematch( MPI_Comm *comm, int icnt1, int *ilist, double *x1,
                                            int icnt2, int *jlist, double *x2 );
 
+//
+// API function prototype to instantiate an object and return a handle
+//
+int incg_Facematch_Init( int *handle, MPI_Comm *comm,
+                                           int icnt1, int *ilist, double *x1,
+                                           int icnt2, int *jlist, double *x2,
+                                           int *iacc );
+
+//
+// API function prototype to deconstruct a handle's object
+//
+int incg_Facematch_Term( int *handle );
+
+
+
 #ifdef __cplusplus
 }
 #endif
