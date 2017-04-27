@@ -1,11 +1,14 @@
 
 ifeq ($(MODE),zero)
-############################### desktop GCC
+############################### desktop GCC ##################
 CC = gcc -D_GNU_SOURCE
 MPICC = mpicc  -D_GNU_SOURCE
 MPICXX = mpicxx  -D_GNU_SOURCE
-
 COPTS = -g -fPIC -O0 -Wall -Wstrict-aliasing  -fno-strict-aliasing
-###############################
+LOPTS = 
+
+### (build the following dependency with the same compilers if possible)
+INMPI_PATH =../INMPI
+##############################################################
 endif
 
