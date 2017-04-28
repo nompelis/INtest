@@ -311,7 +311,7 @@ fclose(fp);
    // created for us. The handle will be assocaited internally with an object.
    //
    int ihandle;
-//while(1) {
+//while(1) { // LOOP
    ierr = incg_Facematch_Init( &ihandle, &comm, nf1, ifaces, rpoints,
                                                 nf2, jfaces, qpoints, NULL );
 
@@ -324,7 +324,7 @@ fclose(fp);
 
    irecv = (int *) malloc(num_recv*sizeof(int));
    isend = (int *) malloc(num_send*sizeof(int));
-   recv_area = (double *) malloc(num_send*sizeof(double));
+   recv_area = (double *) malloc(num_recv*sizeof(double));
    irdis = (int *) malloc(nproc*sizeof(int));
    ircnt = (int *) malloc(nproc*sizeof(int));
    isdis = (int *) malloc(nproc*sizeof(int));
@@ -353,7 +353,16 @@ fclose(fp);
 
 
    ierr = incg_Facematch_Term( &ihandle );
-//}
+
+   // clean-up
+   free( isend );
+   free( irecv );
+   free( recv_area );
+   free( irdis );
+   free( ircnt );
+   free( isdis );
+   free( iscnt );
+//} // LOOP
 
 
 
