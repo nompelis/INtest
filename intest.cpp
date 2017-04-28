@@ -604,7 +604,6 @@ int incg_FaceMatcher::formArrays(
       return(2);
    }
 
-/*
    // negotiate sending arrays
    for(n=0;n<nproc;++n) {
       MPI_Irecv( &( isend_[ isdis[n] ] ), iscnt[n],
@@ -615,7 +614,6 @@ int incg_FaceMatcher::formArrays(
                  MPI_INT, n, 1000+irank, comm, &( ireq[n] ) );
    }
    MPI_Waitall( 2*nproc, ireq, MPI_STATUS_IGNORE );
-*/
 
    // drop the requests array
    free( ireq );
@@ -628,7 +626,7 @@ int incg_FaceMatcher::formArrays(
       iscnt_[n] = iscnt[n];
    }
 
-#ifdef _DEBUG_
+#ifdef _DEBUG2_
 for(n=0;n<nproc;++n) { if( irank == n ) {
 char filename[20];
 sprintf( filename, "TEST_%.5d.dat", n );
@@ -709,7 +707,7 @@ std::vector< incg_FaceMatcher * > global_fm_objects;
 
 
 //
-// API function prototype to instantiate an object and return a handle
+// API function to instantiate an object and return a handle
 //
 int incg_Facematch_Init( int *handle, MPI_Comm *comm,
                                            int icnt1, int *ilist, double *x1,
@@ -719,7 +717,7 @@ int incg_Facematch_Init( int *handle, MPI_Comm *comm,
    int nproc,irank;
    MPI_Comm_size( *comm, &nproc );
    MPI_Comm_rank( *comm, &irank );
-   printf("The function was invoked by MPI process %d \n", irank);
+   printf("The initialization function was invoked by MPI process %d\n", irank);
    int ierr=0;
 
 
@@ -731,12 +729,6 @@ int incg_Facematch_Init( int *handle, MPI_Comm *comm,
 
    // call this if we are using some pre-search-based acceleration technique
    (void) fm->setAccel( iacc );
-   // (this is a test)
-int ijunk[] = {
- 1, 0, 1, 1, 1, 1, 1, 1, 1, 1,
- 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
- 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-   (void) fm->setAccel( ijunk );
 
    // method to create internal structures
    ierr = fm->prepare();
@@ -812,7 +804,7 @@ int incg_Facematch_GetSizes( int *handle, int *num_recv, int *num_send )
 }
 
 //
-// API function prototype to retreive array data from the handle's object
+// API function to retreive array data from the handle's object
 //
 int incg_Facematch_FillArrays( int *handle,
                                int *isend, int *irecv, double *recv_area,
