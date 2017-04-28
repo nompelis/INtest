@@ -51,7 +51,7 @@ int incg_Facematch_FillArrays( int *handle,
 #endif
 
 //
-// a structure to holde overlap data
+// a structure to hold overlap data
 //
 struct overlap_s {
    int iproc;
@@ -85,7 +85,7 @@ class incg_FaceMatcher {
    int getSizeRecv( void ) const;
    int getSizeSend( void ) const;
 
-   int formArrays( int *irecv_, int *isend_, double *area_,
+   int formArrays( int *isend_, int *irecv_, double *area_,
                    int *irdis_, int *ircnt_, int *isdis_, int *iscnt_ );
 
  protected:

@@ -346,6 +346,8 @@ fclose(fp);
       free( isdis );
       free( iscnt );
    }
+   for(i=0;i<num_recv;++i) irecv[i] = -i;
+   for(i=0;i<num_send;++i) isend[i] = -i;
 
    ierr = incg_Facematch_FillArrays( &ihandle,
                               isend, irecv, recv_area,

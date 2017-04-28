@@ -551,12 +551,96 @@ int incg_FaceMatcher::getSizeSend( void ) const
 // Getter method to return the sending count size
 //
 int incg_FaceMatcher::formArrays(
-                   int *irecv_, int *isend_, double *area_, 
+                   int *isend_, int *irecv_, double *area_, 
                    int *irdis_, int *ircnt_, int *isdis_, int *iscnt_ )
 {
+#ifdef _DEBUG_
    if( irank == 0 ) printf("Call to deliver arrays \n");
+#endif
+   int n,ierr=0;
 
+   if( isdis == NULL || iscnt == NULL ) {
+      if( irank == 0 ) {
+         printf("Object not in the right state; API calls out of order? \n");
+      }
+      return(1);
+   }
 
+   // allocate an array of requests
+   MPI_Request *ireq = (MPI_Request *) malloc( nproc*2*sizeof(MPI_Request) );
+   if( ireq == NULL ) ierr = 1;
+   MPI_Allreduce( MPI_IN_PLACE, &ierr, 1, MPI_INT, MPI_SUM, comm );
+   if( ierr != 0 ) {
+      if( irank == 0 ) {
+         printf("Could not allocate memory for MPI requests array (strange)\n");
+      }
+      if( ireq != NULL ) free( ireq );
+      return(-1);
+   }
+
+   // copy receive index array and area/weights array
+   for(n=0;n<nproc;++n) icnt[n] = 0;   // use as counters
+   for(n=0;n<nel1;++n) {
+      std::list< overlap_s > *lp = &( lists[n] );
+      std::list< overlap_s > :: iterator il;
+      for( il = lp->begin(); il != lp->end(); ++il ) {
+         int ip = (*il).iproc;
+
+         irecv_[ idis[ip] + icnt[ip] ] = (*il).ielem;
+         area_[ idis[ip] + icnt[ip] ] = (*il).a;
+
+         icnt[ip] += 1;
+      }
+   }
+   // sanity check
+   for(n=1;n<nproc;++n) {
+      if( idis[n-1] + icnt[n-1] != idis[n] ) ierr = 1;
+   }
+   MPI_Allreduce( MPI_IN_PLACE, &ierr, 1, MPI_INT, MPI_SUM, comm );
+   if( ierr != 0 ) {
+      if( irank == 0 ) {
+         printf("A sanity check did not pass; contact IN immediately!\n");
+      }
+      return(2);
+   }
+
+/*
+   // negotiate sending arrays
+   for(n=0;n<nproc;++n) {
+      MPI_Irecv( &( isend_[ isdis[n] ] ), iscnt[n],
+                 MPI_INT, n, 1000+n, comm, &( ireq[nproc+n] ) );
+   }
+   for(n=0;n<nproc;++n) {
+      MPI_Issend( &( irecv_[ idis[n] ] ), icnt[n],
+                 MPI_INT, n, 1000+irank, comm, &( ireq[n] ) );
+   }
+   MPI_Waitall( 2*nproc, ireq, MPI_STATUS_IGNORE );
+*/
+
+   // drop the requests array
+   free( ireq );
+
+   // copy displacement and count arrays
+   for(n=0;n<nproc;++n) {
+      irdis_[n] = idis[n];
+      ircnt_[n] = icnt[n];
+      isdis_[n] = isdis[n];
+      iscnt_[n] = iscnt[n];
+   }
+
+#ifdef _DEBUG_
+for(n=0;n<nproc;++n) { if( irank == n ) {
+char filename[20];
+sprintf( filename, "TEST_%.5d.dat", n );
+FILE *fp = fopen( filename, "w" );
+fprintf(fp,"### Sending groups ### \n");
+for(int m=0;m<nproc;++m) {
+fprintf(fp,"Receiving procees: %d \n",m);
+for(int i=isdis[m];i<isdis[m]+iscnt[m];++i) fprintf(fp," %d: %d \n",m,i);
+}
+fclose(fp);
+} MPI_Barrier( comm ); }
+#endif
 
    return(0);
 }
@@ -743,7 +827,6 @@ int incg_Facematch_FillArrays( int *handle,
 
    // get the array data
    fm->formArrays( isend, irecv, recv_area, irdis, ircnt, isdis, iscnt );
-
 
 
    return(0);
