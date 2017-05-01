@@ -838,6 +838,66 @@ int incg_Facematch_FillArrays( int *handle,
 }
 
 
+//
+// Fortran API function to initialize
+//
+void incg_facematch_init_( int *handle, int *icomm,
+                                           int *icnt1, int *ilist, double *x1,
+                                           int *icnt2, int *jlist, double *x2,
+                                           int *iacc, int *ier )
+{
+   MPI_Comm comm = MPI_Comm_f2c( *icomm );
+   int nproc,irank;
+   MPI_Comm_size( comm, &nproc );
+   MPI_Comm_rank( comm, &irank );
+   int ierr=0;
+
+   ierr = incg_Facematch_Init( handle, &comm, 
+                               *icnt1, ilist, x1, *icnt2, jlist, x2, iacc );
+
+   *ier = ierr;
+}
+
+//
+// Fortran API function to terminate the object associated with a handle
+//
+void incg_facematch_term_( int *handle, int *ier )
+{
+   int ierr=0;
+
+   ierr = incg_Facematch_Term( handle );
+   *ier = ierr;
+}
+
+//
+// Fortran API function to retreive sizes from the handle's object
+//
+void incg_facematch_getsizes_( int *handle, int *num_recv, int *num_send,
+                               int *ier )
+{
+   int ierr=0;
+
+   ierr = incg_Facematch_GetSizes( handle, num_recv, num_send );
+
+   *ier = ierr;
+}
+
+//
+// Fortran API function to retreive array data from the handle's object
+//
+void incg_facematch_fillarrays_( int *handle,
+                                 int *isend, int *irecv, double *recv_area,
+                                 int *irdis, int *ircnt, int *isdis, int *iscnt,
+                                 int *ier )
+{
+   int ierr=0;
+
+   ierr = incg_Facematch_FillArrays( handle, isend, irecv, recv_area,
+                                             irdis, ircnt, isdis, iscnt );
+   *ier = ierr;
+}
+
+
 }  // extern C
 #endif
 
