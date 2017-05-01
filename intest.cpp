@@ -578,7 +578,7 @@ int incg_FaceMatcher::formArrays(
       return(-1);
    }
 
-   // copy receive index array and area/weights array
+   // copy "want sent" index array
    for(n=0;n<nproc;++n) icnt[n] = 0;   // use as counters
    for(n=0;n<nel1;++n) {
       std::list< overlap_s > *lp = &( lists[n] );
@@ -587,7 +587,6 @@ int incg_FaceMatcher::formArrays(
          int ip = (*il).iproc;
 
          irecv_[ idis[ip] + icnt[ip] ] = (*il).ielem;
-         area_[ idis[ip] + icnt[ip] ] = (*il).a;
 
          icnt[ip] += 1;
       }
@@ -604,7 +603,7 @@ int incg_FaceMatcher::formArrays(
       return(2);
    }
 
-   // negotiate sending arrays
+   // negotiate sending arrays (communicate to sender to to be sending us)
    for(n=0;n<nproc;++n) {
       MPI_Irecv( &( isend_[ isdis[n] ] ), iscnt[n],
                  MPI_INT, n, 1000+n, comm, &( ireq[nproc+n] ) );
@@ -617,6 +616,21 @@ int incg_FaceMatcher::formArrays(
 
    // drop the requests array
    free( ireq );
+
+   // form the receiving array mappings to local surface1 elements
+   for(n=0;n<nproc;++n) icnt[n] = 0;   // use as counters
+   for(n=0;n<nel1;++n) {
+      std::list< overlap_s > *lp = &( lists[n] );
+      std::list< overlap_s > :: iterator il;
+      for( il = lp->begin(); il != lp->end(); ++il ) {
+         int ip = (*il).iproc;
+
+         irecv_[ idis[ip] + icnt[ip] ] = n;
+         area_[ idis[ip] + icnt[ip] ] = (*il).a;
+
+         icnt[ip] += 1;
+      }
+   }
 
    // copy displacement and count arrays
    for(n=0;n<nproc;++n) {
@@ -748,7 +762,6 @@ int incg_Facematch_Init( int *handle, MPI_Comm *comm,
       return(2);
    }
 
-
    //
    // place the object in the vector
    //
@@ -823,9 +836,6 @@ int incg_Facematch_FillArrays( int *handle,
 
    return(0);
 }
-
-
-
 
 
 }  // extern C
