@@ -29,6 +29,9 @@ all: libs
               code.o \
               -L . -lINtest -lm $(LOPTS)
 
+fortran: libs
+	$(MPICC) -c -fPIC fcode_overlap.c -I .
+	$(MPIF90) $(FOPTS) fcode.f -Wl,-rpath=. fcode_overlap.o -L. -lINtest
 
 libs:
 	$(MPICXX) -c $(COPTS) -D_USE_COMM_DUP intest.cpp

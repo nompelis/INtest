@@ -5,6 +5,8 @@ CC = gcc -D_GNU_SOURCE
 MPICC = mpicc  -D_GNU_SOURCE
 MPICXX = mpicxx  -D_GNU_SOURCE
 COPTS = -g -fPIC -O0 -Wall -Wstrict-aliasing  -fno-strict-aliasing
+MPIF90 = mpif90  -D_GNU_SOURCE
+FOPTS = -g -fPIC -O0 -Wall -fbounds-check
 LOPTS = 
 
 ### (build the following dependency with the same compilers if possible)
