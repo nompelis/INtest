@@ -73,7 +73,7 @@ c---- convert regular arrays to expanded nodal arrays
       enddo
 
 c---- display surfaces with tecplot/paraview
-      call dump_faces( irank, im,jm, icon, xdi, jcon, xdj )
+      call dump_faces( irank, im,jm, icon, xi, jcon, xj )
 
 c---- make an acceleration array; an array that can filter out overlaps by proc
       iacc(:) = nel2    ! positive values imply possible overlap with process
@@ -82,8 +82,8 @@ c---- invoke the face-matching library
       call incg_facematch_setOverlapFunction()
 
       call incg_Facematch_Init( ihandle, icomw,
-     &                          nel1, icon, xi,
-     &                          nel2, jcon, xj, iacc, ier )
+     &                          nel1, icon, xdi,
+     &                          nel2, jcon, xdj, iacc, ier )
 
       call incg_Facematch_GetSizes( ihandle, num_recv, num_send, ier )
       IF( irank.eq.0 ) PRINT*,'GOT SIZES', num_recv, num_send
