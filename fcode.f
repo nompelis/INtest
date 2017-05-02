@@ -10,13 +10,15 @@ c *** IN 2017/05/01
       Integer :: im,jm,nel1,nel2,nno
       Integer,allocatable,dimension(:,:) :: icon,jcon
       Integer,allocatable,dimension(:) :: iacc
-      Real*8, allocatable,dimension(:,:) :: xi,xj
+      Real*8, allocatable,dimension(:,:) :: xi,xj, xdi,xdj
       Integer icomw,irank,nproc,ier
 
       Integer ihandle, num_recv, num_send
       Integer,allocatable,dimension(:) :: irdis,ircnt, isdis,iscnt
       Integer,allocatable,dimension(:) :: irecv,isend
       Real*8, allocatable,dimension(:) :: area
+      Integer i,j,n
+
 
       icomw = MPI_COMM_WORLD
       call MPI_INIT(ier)
@@ -40,8 +42,38 @@ c---- create two surfaces
 c---- offset the node coefficients by process ID; identical nodes for both
       xi(1,:) = xi(1,:) + dble(irank*im)
       xj(1,:) = xj(1,:) + dble(irank*im)
+
+c---- convert regular arrays to expanded nodal arrays
+      allocate(xdi(3,im*jm*4), xdj(3,im*jm*4*2) )
+      do j = 1,jm
+      do i = 1,im
+         n = (j-1)*im + i
+         xdi(:,(n-1)*4 + 1) = xi(:, icon(1,n) )
+         xdi(:,(n-1)*4 + 2) = xi(:, icon(2,n) )
+         xdi(:,(n-1)*4 + 3) = xi(:, icon(3,n) )
+         xdi(:,(n-1)*4 + 4) = xi(:, icon(4,n) )
+      enddo
+      enddo
+
+      n = 0
+      do j = 1,jm
+      do i = 1,im
+         n = n + 1
+         xdj(:,(n-1)*4 + 1) = xj(:, jcon(1,n) )
+         xdj(:,(n-1)*4 + 2) = xj(:, jcon(2,n) )
+         xdj(:,(n-1)*4 + 3) = xj(:, jcon(3,n) )
+         xdj(:,(n-1)*4 + 4) = -8.8d0
+
+         n = n + 1
+         xdj(:,(n-1)*4 + 1) = xj(:, jcon(1,n) )
+         xdj(:,(n-1)*4 + 2) = xj(:, jcon(2,n) )
+         xdj(:,(n-1)*4 + 3) = xj(:, jcon(3,n) )
+         xdj(:,(n-1)*4 + 4) = -8.8d0
+      enddo
+      enddo
+
 c---- display surfaces with tecplot/paraview
-      call dump_faces( irank, im,jm, icon, xi, jcon, xj )
+      call dump_faces( irank, im,jm, icon, xdi, jcon, xdj )
 
 c---- make an acceleration array; an array that can filter out overlaps by proc
       iacc(:) = nel2    ! positive values imply possible overlap with process
@@ -81,6 +113,7 @@ c *** Here we perform a test of the communication functionality
       call MPI_FINALIZE(ier)
 
       deallocate( icon,jcon,iacc,xi,xj )
+      deallocate( xdi,xdj)
       deallocate( irdis, ircnt, isdis,iscnt, irecv,isend,area )
 
       End
