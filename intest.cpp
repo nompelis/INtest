@@ -70,6 +70,8 @@ incg_FaceMatcher::~incg_FaceMatcher( )
 #ifdef _DEBUG_
    if( irank == 0 ) printf("incg_FaceMatcher object deconstructed \n");
 #endif
+   if( irank == 0 ) printf("Face-Matcher done\n");
+
    MPI_Comm_free( &comm );
 }
 
@@ -116,6 +118,8 @@ int incg_FaceMatcher::prepare( void )
    int n;
    int ierr = 0;
 
+
+   if( irank == 0 ) printf("Face-matcher invoked\n");
 
    // sanity checks
    if( nel1 <= 0 || nel2 <= 0 ||
@@ -260,7 +264,10 @@ fclose(fp);
       MPI_Bcast( idum, 5*knt, MPI_INT, n, comm );
       MPI_Bcast( rdum, 4*3*knt, MPI_DOUBLE, n, comm );
 
+#ifdef _DEBUG_
       if( irank == 0 ) printf("Broadcast completed for process %d \n", n);
+#endif
+
 #ifdef _DEBUG2_
 if(irank==0){    // CHANGE THE PROCESS NUMBER TO TEST OTHER PROCESSES
 char filename[20];
@@ -731,7 +738,9 @@ int incg_Facematch_Init( int *handle, MPI_Comm *comm,
    int nproc,irank;
    MPI_Comm_size( *comm, &nproc );
    MPI_Comm_rank( *comm, &irank );
+#ifdef _DEBUG_
    printf("The initialization function was invoked by MPI process %d\n", irank);
+#endif
    int ierr=0;
 
 

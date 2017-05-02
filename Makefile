@@ -7,7 +7,7 @@ MODE = zero
 include Makefile.in
 
 ### decide on debugging level(s)
-COPTS += -D  _DEBUG_
+COPTS += -DNO_DEBUG_
 COPTS += -DNO_DEBUG2_
 
 ### -rpath arguments for finding .so objects in pre-specified locations
