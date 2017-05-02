@@ -338,8 +338,8 @@ int incg_FaceMatcher::perform( void )
      for(int mm=0;mm<ic1;++mm) {
         printf(" %lf %lf %lf \n",
            xyz1[mm*3 + 0],
-           xyz1[mm*3 + 2],
-           xyz1[mm*3 + 1] );
+           xyz1[mm*3 + 1],
+           xyz1[mm*3 + 2] );
      }
   }
 #endif
@@ -360,8 +360,8 @@ int incg_FaceMatcher::perform( void )
      for(int mm=0;mm<ic2;++mm) {
         printf(" %lf %lf %lf \n",
            xyz2[mm*3 + 0],
-           xyz2[mm*3 + 2],
-           xyz2[mm*3 + 1] );
+           xyz2[mm*3 + 1],
+           xyz2[mm*3 + 2] );
      }
   }
 //sleep(1);
