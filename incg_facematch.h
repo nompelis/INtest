@@ -1,6 +1,6 @@
 
-#ifndef _INTEST_H_
-#define _INTEST_H_
+#ifndef _INCG_FACEMATCH_H_
+#define _INCG_FACEMATCH_H_
 
 #include <stdio.h>
 #include <stdlib.h>

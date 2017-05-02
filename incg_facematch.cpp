@@ -3,7 +3,7 @@
 #include <mpi.h>
 #include <indsde.h>
 
-#include "intest.h"
+#include "incg_facematch.h"
 //#include <unistd.h> // HACK remove after done with sleep()
 
 #ifdef __cplusplus

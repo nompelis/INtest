@@ -34,10 +34,10 @@ fortran: libs
 	$(MPIF90) $(FOPTS) fcode.f -Wl,-rpath=. fcode_overlap.o -L. -lINtest
 
 libs:
-	$(MPICXX) -c $(COPTS) -D_USE_COMM_DUP intest.cpp
+	$(MPICXX) -c $(COPTS) -D_USE_COMM_DUP incg_facematch.cpp
 	$(MPICXX) -shared -Wl,-soname,libINtest.so,-rpath=$(INMPI_PATH)$(RPATH) \
              -o libINtest.so \
-             intest.o \
+             incg_facematch.o \
              $(LOPTS)
 
 

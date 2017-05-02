@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 
-#include "intest.h"
+#include "incg_facematch.h"
 
 
 //
