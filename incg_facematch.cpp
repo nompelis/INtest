@@ -341,7 +341,7 @@ int incg_FaceMatcher::perform( void )
       }}
 #ifdef _DEBUG2_
   if(irank==0) {
-     printf("ELEMENT: %d \n", i );
+     printf("ELEMENT: %d (count %d) \n", i, ic1 );
      for(int mm=0;mm<ic1;++mm) {
         printf(" %lf %lf %lf \n",
            xyz1[mm*3 + 0],
@@ -355,7 +355,7 @@ int incg_FaceMatcher::perform( void )
          for(int j=idis[n];j<idis[n]+icnt[n];++j) {
 //if(irank==0) printf("QUERYING: %d   %d,%d \n", i, n, j );
 
-            int ic2 = idata[i*5 + 0];
+            int ic2 = idata[j*5 + 0];
             for(int mm=0;mm<4;++mm) {
                for(int nn=0;nn<3;++nn) {
                   xyz2[mm*3 + nn] = rdata[j*4*3 + mm*3 + nn];
@@ -363,7 +363,7 @@ int incg_FaceMatcher::perform( void )
 
 #ifdef _DEBUG2_
   if(irank==0) {
-     printf("OTHER ELEMENT: (proc %d) %d \n", n,j );
+     printf("OTHER ELEMENT: (proc %d) %d (count %d) \n", n,j, ic2 );
      for(int mm=0;mm<ic2;++mm) {
         printf(" %lf %lf %lf \n",
            xyz2[mm*3 + 0],
