@@ -19,10 +19,10 @@ incg_FaceMatcher::incg_FaceMatcher( MPI_Comm *comp )
    MPI_Comm_size( comm, &nproc );
    MPI_Comm_rank( comm, &irank );
 
-   nel1 = 0;
+   nel1 = -1;
    icon = NULL;
    xi = NULL;
-   nel2 = 0;
+   nel2 = -1;
    jcon = NULL;
    xj = NULL;
 
@@ -122,7 +122,7 @@ int incg_FaceMatcher::prepare( void )
    if( irank == 0 ) printf("Face-matcher invoked\n");
 
    // sanity checks
-   if( nel1 <= 0 || nel2 <= 0 ||
+   if( nel1 < 0 || nel2 < 0 ||
        icon == NULL || jcon == NULL ||
        xi == NULL || xj == NULL ) {
       if( irank == 0 ) printf("The object data have not been set\n");
@@ -610,7 +610,7 @@ int incg_FaceMatcher::formArrays(
       return(2);
    }
 
-   // negotiate sending arrays (communicate to sender to to be sending us)
+   // negotiate sending arrays (communicate to sender what to be sending us)
    for(n=0;n<nproc;++n) {
       MPI_Irecv( &( isend_[ isdis[n] ] ), iscnt[n],
                  MPI_INT, n, 1000+n, comm, &( ireq[nproc+n] ) );
