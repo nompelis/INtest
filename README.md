@@ -14,3 +14,8 @@ more information on how to use this functionality, have a look at the example
 codes and contact me.
 
 IN 2017/05/02
+
+This library was used in the work presented in this reference:
+https://arc.aiaa.org/doi/abs/10.2514/6.2017-4502
+
+IN 2017/06/08
