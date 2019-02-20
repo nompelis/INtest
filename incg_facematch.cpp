@@ -496,7 +496,11 @@ fclose(fp);
    //
    // negotiate sending counts and form displacement
    //
+#ifndef _USE_INMPI_
+   ierr = MPI_Alltoall( icnt, nproc, MPI_INT, iscnt, nproc, MPI_INT, comm );
+#else
    ierr = inMPI_DSDE_Global_WindowExchange( nproc, irank, comm, icnt, iscnt );
+#endif
    if( ierr != 0 ) return(3);
 
    isdis[0] = 0;
